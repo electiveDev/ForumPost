@@ -1,5 +1,5 @@
 # Forum Posts Downloader
-This Tampermonkey script allows for downloading individual posts and pages from the SimpCity forum (should work for any XenForo forum).
+This Tampermonkey script allows for downloading individual posts and pages from the SimpCity forum (should work for any XenForo forum) and now includes tailored rate limiting for celebforum.to.
 
 ## Supported Hosts
 - [x] jpg.church 🢒 https://simpcity.su/threads/alexis-clark.15203/post-1160129

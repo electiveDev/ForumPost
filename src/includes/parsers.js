@@ -42,7 +42,11 @@ const parsers = {
         });
 
       // Remove thread links.
-      [...messageContentClone.querySelectorAll('.contentRow-header > a[href^="https://simpcity.su/threads"]')]
+      [
+        ...messageContentClone.querySelectorAll(
+          '.contentRow-header > a[href^="https://simpcity.su/threads"], .contentRow-header > a[href^="https://celebforum.to/threads"]',
+        ),
+      ]
         .map(a => a.parentNode.parentNode.parentNode.parentNode)
         .forEach(i => i.remove());
 

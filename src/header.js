@@ -6,18 +6,20 @@
 // @author x111000111
 // @author backwards
 // @description Downloads images and videos from posts
-// @version 2.5.2
+// @version 2.5.3
 // @updateURL https://github.com/SkyCloudDev/ForumPostDownloader/raw/main/dist/build.user.js
 // @downloadURL https://github.com/SkyCloudDev/ForumPostDownloader/raw/main/dist/build.user.js
 // @icon https://simp4.jpg.church/simpcityIcon192.png
 // @license WTFPL; http://www.wtfpl.net/txt/copying/
 // @match https://simpcity.su/threads/*
+// @match https://celebforum.to/threads/*
 // @require https://unpkg.com/@popperjs/core@2
 // @require https://unpkg.com/tippy.js@6
 // @require https://unpkg.com/file-saver@2.0.4/dist/FileSaver.min.js
 // @require https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.5/jszip.min.js
 // @require https://raw.githubusercontent.com/geraintluff/sha256/gh-pages/sha256.min.js
 // @connect self
+// @connect celebforum.to
 // @connect anonfiles.com
 // @connect coomer.party
 // @connect box.com
