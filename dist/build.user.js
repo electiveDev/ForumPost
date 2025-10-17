@@ -248,8 +248,23 @@ const h = {
    * @returns {unknown}
    */
   ext: path => {
-    return !path || path.indexOf('.') < 0 ? null : path.split('.').reverse()[0];
+    if (typeof path !== 'string') {
+      return null;
+    }
+
+    const sanitized = h.stripQueryAndHash(path).trim();
+
+    if (!sanitized || sanitized.indexOf('.') < 0) {
+      return null;
+    }
+
+    return sanitized.split('.').reverse()[0];
   },
+  /**
+   * @param url
+   * @returns {string}
+   */
+  stripQueryAndHash: url => (typeof url === 'string' ? url.replace(/[?#].*$/, '') : url),
   /**
    * @param element
    * @returns {string}
@@ -2974,8 +2989,10 @@ const downloadPost = async (parsedPost, parsedHosts, enabledHostsCB, resolvers, 
 
   if (postSettings.skipDuplicates) {
     const unique = [];
-    for (const r of resolved.filter(r => r.url).sort((a, b) => (a.host.type !== 'folder' || b.host.type !== 'folder' ? -1 : 1))) {
-      const filename = h.basename(r.url);
+    for (const r of resolved
+      .filter(r => r.url)
+      .sort((a, b) => (a.host.type !== 'folder' || b.host.type !== 'folder' ? -1 : 1))) {
+      const filename = h.basename(h.stripQueryAndHash(r.url));
       if (unique.find(u => u.filename.toLowerCase() === filename.toLowerCase())) {
         log.post.info(postId, `::Skipped duplicate::: ${filename} ::from:: ${r.url}`, postNumber);
         continue;
@@ -3083,25 +3100,31 @@ const downloadPost = async (parsedPost, parsedHosts, enabledHostsCB, resolvers, 
 
             // TODO: Extract to method.
             const filename = filenames.find(f => f.url === url);
+            const sanitizedUrl = h.stripQueryAndHash(url);
 
             let basename;
 
             if (url.includes('https://pixeldrain.com/')) {
               basename = response.responseHeaders.match(/^content-disposition.+filename=(.+)$/im)[1].replace(/"/g, '');
             } else if (forumAttachmentPattern.test(url)) {
-              basename = filename ? filename.name : h.basename(url).replace(/(.*)-(.{3,4})\.\d*$/i, '$1.$2');
+              basename = filename
+                ? filename.name
+                : h.basename(h.stripQueryAndHash(url)).replace(/(.*)-(.{3,4})\.\d*$/i, '$1.$2');
             } else if (url.includes('kemono.party')) {
               basename = filename
                 ? filename.name
                 : h
-                    .basename(url)
+                    .basename(url.replace(/#.*/, ''))
                     .replace(/(.*)\?f=(.*)/, '$2')
                     .replace('%20', ' ');
             } else {
-              basename = filename ? filename.name : h.basename(url).replace(/\?.*/, '').replace(/#.*/, '');
+              basename = filename ? filename.name : h.basename(sanitizedUrl);
             }
 
+            basename = basename.replace(/[?#].*$/, '');
+
             let ext = h.ext(basename);
+            ext = ext ? ext.toLowerCase() : ext;
 
             const mimeType = mimeTypes.find(m => m.url === url);
 

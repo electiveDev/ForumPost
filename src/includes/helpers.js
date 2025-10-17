@@ -33,8 +33,23 @@ const h = {
    * @returns {unknown}
    */
   ext: path => {
-    return !path || path.indexOf('.') < 0 ? null : path.split('.').reverse()[0];
+    if (typeof path !== 'string') {
+      return null;
+    }
+
+    const sanitized = h.stripQueryAndHash(path).trim();
+
+    if (!sanitized || sanitized.indexOf('.') < 0) {
+      return null;
+    }
+
+    return sanitized.split('.').reverse()[0];
   },
+  /**
+   * @param url
+   * @returns {string}
+   */
+  stripQueryAndHash: url => (typeof url === 'string' ? url.replace(/[?#].*$/, '') : url),
   /**
    * @param element
    * @returns {string}
