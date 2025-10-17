@@ -36,6 +36,11 @@ const h = {
     return !path || path.indexOf('.') < 0 ? null : path.split('.').reverse()[0];
   },
   /**
+   * @param url
+   * @returns {string}
+   */
+  stripQueryAndHash: url => (typeof url === 'string' ? url.replace(/[?#].*$/, '') : url),
+  /**
    * @param element
    * @returns {string}
    */
