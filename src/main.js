@@ -1,6 +1,38 @@
 // Holds the posts that are processing downloads.
 let processing = [];
 
+const forumDomains = ['simpcity.su', 'celebforum.to'];
+
+const forumRateLimits = {
+  default: {
+    downloadBatchLength: 2,
+    downloadPollDelay: 1000,
+    interBatchDelay: 0,
+  },
+  'celebforum.to': {
+    downloadBatchLength: 1,
+    downloadPollDelay: 2000,
+    interBatchDelay: 2000,
+  },
+};
+
+const getForumRateLimit = domain => {
+  const config = {
+    ...forumRateLimits.default,
+    ...(forumRateLimits[domain] || {}),
+  };
+
+  config.downloadBatchLength = Math.max(1, Number(config.downloadBatchLength) || 1);
+  config.downloadPollDelay = Math.max(0, Number(config.downloadPollDelay) || 0);
+  config.interBatchDelay = Math.max(0, Number(config.interBatchDelay) || 0);
+
+  return config;
+};
+
+const forumAttachmentPattern = new RegExp(
+  `https://(${forumDomains.map(domain => domain.replace(/\./g, '\\\.')).join('|')})/attachments/`,
+);
+
 /**
  * An array of arrays defining how to match hosts inside the posts.
  *
@@ -43,6 +75,7 @@ let processing = [];
  */
 const hosts = [
   ['simpcity.su:Attachments', [/simpcity.su\/attachments/]],
+  ['celebforum.to:Attachments', [/celebforum.to\/attachments/]],
   ['anonfiles.com:', [/anonfiles.com/]],
   ['coomer.party:Profiles', [/coomer.party\/[~an@._-]+\/user/]],
   ['coomer.party:image', [/(\w+\.)?coomer.party\/(data|thumbnail)/]],
@@ -1181,6 +1214,7 @@ const resolvers = [
     },
   ],
   [[/simpcity.su\/attachments/], url => url],
+  [[/celebforum.to\/attachments/], url => url],
   [[/(thumbs|images)(\d+)?.imgbox.com\//, /:!imgbox.com\/g\//], url => url.replace(/_t\./gi, '_o.').replace(/thumbs/i, 'images')],
   [
     [/imgbox.com\/g\//],
@@ -1635,7 +1669,8 @@ const downloadPost = async (parsedPost, parsedHosts, enabledHostsCB, resolvers, 
     const resources = resolved.filter(r => r.url);
     totalDownloadable = resources.length;
 
-    const batchLength = 2;
+    const normalizedHost = window.location.hostname.replace(/^www\./, '');
+    const { downloadBatchLength: batchLength, downloadPollDelay, interBatchDelay } = getForumRateLimit(normalizedHost);
 
     let currentBatch = 0;
 
@@ -1725,7 +1760,7 @@ const downloadPost = async (parsedPost, parsedHosts, enabledHostsCB, resolvers, 
 
             if (url.includes('https://pixeldrain.com/')) {
               basename = response.responseHeaders.match(/^content-disposition.+filename=(.+)$/im)[1].replace(/"/g, '');
-            } else if (url.includes('https://simpcity.su/attachments/')) {
+            } else if (forumAttachmentPattern.test(url)) {
               basename = filename ? filename.name : h.basename(url).replace(/(.*)-(.{3,4})\.\d*$/i, '$1.$2');
             } else if (url.includes('kemono.party')) {
               basename = filename
@@ -1847,11 +1882,15 @@ const downloadPost = async (parsedPost, parsedHosts, enabledHostsCB, resolvers, 
       }
 
       while (completedBatchedDownloads < batch.length) {
-        await h.delayedResolve(1000);
+        await h.delayedResolve(downloadPollDelay);
       }
 
       if (completedBatchedDownloads >= batch.length) {
         completedBatchedDownloads = 0;
+      }
+
+      if (interBatchDelay && currentBatch < batches.length) {
+        await h.delayedResolve(interBatchDelay);
       }
 
       batch = getNextBatch();
